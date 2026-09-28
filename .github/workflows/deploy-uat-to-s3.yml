@@ -1,0 +1,62 @@
+name: Deploy to S3
+
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+    types:
+      - closed
+    branches:
+      - dev
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true || github.event_name == 'push'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          
+      - name: Deploy to S3
+        run: |
+          # First sync everything normally
+          aws s3 sync . s3://${{ secrets.UAT_S3_BUCKET }} --delete --exclude ".git/*" --exclude ".github/*"
+          
+          # Then fix content types for specific files and extension-less HTML files
+          echo "Setting content type for manifest.webmanifest..."
+          if [ -f "manifest.webmanifest" ]; then
+            aws s3 cp "manifest.webmanifest" "s3://${{ secrets.UAT_S3_BUCKET }}/manifest.webmanifest" --content-type "application/json" --metadata-directive REPLACE
+          fi
+          
+          echo "Setting content type for sitemap..."
+          if [ -f "sitemap" ]; then
+            aws s3 cp "sitemap" "s3://${{ secrets.UAT_S3_BUCKET }}/sitemap" --content-type "application/xml" --metadata-directive REPLACE
+          fi
+          
+          echo "Setting content type for robots.txt..."
+          if [ -f "robots.txt" ]; then
+            aws s3 cp "robots.txt" "s3://${{ secrets.UAT_S3_BUCKET }}/robots.txt" --content-type "text/plain" --metadata-directive REPLACE
+          fi
+          
+          echo "Processing extension-less HTML files..."
+          find . -type f -not -path "./.git/*" -not -path "./.github/*" -not -name "*.*" -not -name "manifest.webmanifest" -not -name "sitemap" -not -name "robots.txt" | while read -r file; do
+            # Check if file is HTML
+            if grep -q "<html" "$file" || grep -q "<!DOCTYPE html" "$file"; then
+              # Remove the leading './' if present
+              dest_path="${file#./}"
+              aws s3 cp "s3://${{ secrets.UAT_S3_BUCKET }}/$dest_path" "s3://${{ secrets.UAT_S3_BUCKET }}/$dest_path" --content-type "text/html" --metadata-directive REPLACE
+            fi
+          done
+          
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.UAT_CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"

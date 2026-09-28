@@ -1,0 +1,17 @@
+{
+  "short_name": "Them",
+  "name": "Them Consulting",
+  "description": "Best UI/UX design and development agency in India. Win with Agile Innovation, Product Strategy, Experience Design and faster GTM. Top Experience Design, UX development agency in Mumbai",
+  "icons": [
+    {
+      "src": "/assets/images/logo.svg",
+      "type": "image/svg",
+      "sizes": "192x192"
+    }
+  ],
+  "start_url": "/?source=pwa",
+  "background_color": "#202020",
+  "display": "fullscreen",
+  "scope": "/",
+  "Them_color": "#202020"
+}
