@@ -1385,46 +1385,48 @@ $(function () {
     if ($("body").hasClass("pg-light")) {
       $(".bs-header").addClass("typ-white");
     }
-    if (device.mobile() === true || device.tablet() === true) {
-      $(".bs-header .menu-btn").on("click", function () {
-        if ($(".bs-header").hasClass("open") == true) {
-          $(".bs-header").removeClass("open");
-          $("body").removeClass("scroll-lock");
-          $(".nav-list-wrap .nav-item").each(function (e) {
+    $(".bs-header .menu-btn").on("click", function () {
+      if ($(".bs-header").hasClass("open") == true) {
+        $(".bs-header").removeClass("open");
+        $("body").removeClass("scroll-lock");
+        $(".bs-header .nav-list .nav-item").removeClass(
+          "active-mega active-mobile-mega",
+        );
+        $(".services-mega-panel").removeClass("show-mega");
+        $(".nav-list-wrap .nav-item").each(function (e) {
+          var obj = this;
+          $(obj).find(".nav-link").css({
+            "transition-delay": "0.0s",
+          });
+        });
+        $(".connect-info a")
+          .each(function (e) {
             var obj = this;
-            $(obj).find(".nav-link").css({
+            $(obj).css({
               "transition-delay": "0.0s",
             });
-          });
-          $(".connect-info a")
-            .each(function (e) {
-              var obj = this;
-              $(obj).css({
-                "transition-delay": "0.0s",
+          })
+          .promise()
+          .done(function () {
+            setTimeout(function () {
+              $(".connect-info a").css({
+                "transition-delay": "",
               });
-            })
-            .promise()
-            .done(function () {
-              setTimeout(function () {
-                $(".connect-info a").css({
-                  "transition-delay": "",
-                });
-              }, 100);
-            });
-        } else {
-          $(".bs-header").addClass("open");
-          $("body").addClass("scroll-lock");
-          $(".nav-list-wrap .nav-item").each(function (e) {
-            var obj = this;
-            var delayCounter = e / 10 + 0.8 + "s";
-            $(obj).find(".nav-link").css({
-              "transition-delay": delayCounter,
-            });
+            }, 100);
           });
-        }
-      });
-      headerJs();
-    }
+      } else {
+        $(".bs-header").addClass("open");
+        $("body").addClass("scroll-lock");
+        $(".nav-list-wrap .nav-item").each(function (e) {
+          var obj = this;
+          var delayCounter = e / 10 + 0.8 + "s";
+          $(obj).find(".nav-link").css({
+            "transition-delay": delayCounter,
+          });
+        });
+      }
+    });
+    headerJs();
   }
   if (localStorage.getItem("scrollto") !== null) {
     onPgScroll();
@@ -1606,13 +1608,36 @@ $(document).ready(function () {
     },
   );
 
-  /* Close Services Mega Menu Panel & Mobile Nav Overlay when any sub-link is clicked */
-  $(".services-mega-panel a").on("click", function () {
-    $servicesNavItem.removeClass("active-mega active-mobile-mega");
-    $megaPanel.removeClass("show-mega");
+  /* Function to close mobile navigation drawer */
+  function closeMobileMenu() {
+    $(".bs-header").removeClass("open");
+    $("body").removeClass("scroll-lock");
+    $(".nav-item-has-dropdown").removeClass("active-mega active-mobile-mega");
+    $(".services-mega-panel").removeClass("show-mega");
+  }
+
+  /* Close mobile menu overlay when ANY navigation link or sub-link is clicked on mobile */
+  $(document).on(
+    "click",
+    ".bs-header .nav-list a, .services-mega-panel a",
+    function (e) {
+      if ($(window).width() <= 991) {
+        // If user clicked top-level "Services" link to toggle dropdown, do not close navbar here
+        if (
+          $(this).closest(".nav-item").attr("data-route") === "services" &&
+          $(this).parent().hasClass("nav-link-wrapper")
+        ) {
+          return;
+        }
+        closeMobileMenu();
+      }
+    },
+  );
+
+  /* Ensure mobile menu is closed on page load and page restoration (bfcache / back button) */
+  $(window).on("pageshow load", function () {
     if ($(window).width() <= 991) {
-      $(".bs-header").removeClass("open");
-      $("body").removeClass("scroll-lock");
+      closeMobileMenu();
     }
   });
 
