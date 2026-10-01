@@ -1531,8 +1531,7 @@ window.addEventListener("load", function () {
 });
 
 /* ==========================================================================
-   SERVICES MEGA MENU DROPDOWN LOGIC (Desktop Hover & Mobile Click Toggle)
-   Updated to handle 2-column grid links dropdown on phone without image
+   SERVICES MEGA MENU DROPDOWN LOGIC (Desktop Hover & Mobile Centered Popup)
    ========================================================================== */
 $(document).ready(function () {
   var megaTimer;
@@ -1540,6 +1539,15 @@ $(document).ready(function () {
     '.bs-header .nav-list .nav-item[data-route="services"]',
   );
   var $megaPanel = $(".services-mega-panel");
+
+  /* Auto-inject Close Cross (X) Button inside .services-mega-panel if missing */
+  $(".services-mega-panel").each(function () {
+    if (!$(this).find(".services-mega-close").length) {
+      $(this).prepend(
+        '<button type="button" class="services-mega-close" aria-label="Close Services Menu">&times;</button>',
+      );
+    }
+  });
 
   /* Desktop Hover Logic (Width >= 992px) */
   $servicesNavItem
@@ -1560,7 +1568,7 @@ $(document).ready(function () {
       }
     });
 
-  /* Mobile Arrow Button & Link Click Toggle Logic (Phone Dropdown) */
+  /* Mobile Arrow Button & Link Click Toggle Logic (Phone Centered Popup) */
   $(document).on("click", ".services-dropdown-toggle", function (e) {
     e.preventDefault();
     e.stopPropagation();
@@ -1586,6 +1594,14 @@ $(document).ready(function () {
     },
   );
 
+  /* Mobile Close Cross Button Click */
+  $(document).on("click", ".services-mega-close", function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    $(".nav-item-has-dropdown").removeClass("active-mobile-mega active-mega");
+    $(".services-mega-panel").removeClass("show-mega");
+  });
+
   /* Services Mega Menu Image Swap Logic (Desktop only) */
   $(document).on(
     "mouseenter click",
@@ -1608,7 +1624,7 @@ $(document).ready(function () {
     },
   );
 
-  /* Function to close mobile navigation drawer */
+  /* Function to close mobile navigation drawer and mega panel */
   function closeMobileMenu() {
     $(".bs-header").removeClass("open");
     $("body").removeClass("scroll-lock");
